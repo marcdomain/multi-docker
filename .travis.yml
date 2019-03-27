@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t marcdomain/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run marcdomain/react-test npm test -- --coverage
+
+after_sucess:
+  - docker build -t marcdomain/multi-client ./client
+  - docker build -t marcdomain/multi-nginx ./nginx
+  - docker build -t marcdomain/multi-server ./server
+  - docker build -t marcdomain/multi-worker ./worker
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker heroku_hub
+  - docker push marcdomain/multi-client
+  - docker push marcdomain/multi-nginx
+  - docker push marcdomain/multi-server
+  - docker push marcdomain/multi-worker
